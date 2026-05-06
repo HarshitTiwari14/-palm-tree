@@ -1,145 +1,144 @@
-# Async Document Processing Workflow System
+# 🚀 Async Document Processing Workflow System
 
-> A production-style full-stack system for uploading documents, processing them asynchronously, tracking progress in real time, reviewing extracted output, and exporting finalized results.
+> A scalable full-stack application for uploading documents, processing them asynchronously, tracking real-time progress, reviewing extracted data, and exporting finalized results.
 
-## Overview
+---
 
-This project is designed around a realistic document operations workflow. Users upload one or more files, the backend creates background jobs, Celery workers process the files asynchronously, Redis Pub/Sub streams progress updates, and the frontend allows users to review, edit, finalize, and export the result.
+## 📌 Overview
 
-The focus is not advanced OCR or AI quality. The focus is strong system design, clean async execution, reliable progress tracking, and a practical human-in-the-loop review flow.
+This project demonstrates a **real-world document processing pipeline** where users can upload files and track their processing lifecycle in real time.
 
-## Problem We Are Solving
+Instead of handling heavy operations inside API requests, the system leverages **asynchronous background workers** to ensure performance, scalability, and reliability.
 
-Manual document handling is slow, repetitive, and hard to track. In real teams, documents such as invoices, resumes, contracts, or onboarding forms often need:
+It focuses on:
 
-- upload and storage
-- background processing
-- status visibility
-- human review
-- retry on failure
-- export after approval
+* clean system architecture
+* async execution using queues
+* real-time progress updates
+* human-in-the-loop validation
 
-This system solves that with a clean async architecture instead of doing heavy work inside API requests.
+---
 
-## Real-World Scenario
+## 🎯 Problem Statement
 
-### Invoice Processing for an Operations Team
+Manual document workflows are often:
 
-An accounts team receives dozens of vendor invoices every day. A reviewer uploads invoice PDFs into the system. Each invoice is processed in the background to extract fields such as:
+* slow and repetitive
+* difficult to track
+* error-prone
 
-- vendor name
-- invoice number
-- invoice date
-- total amount
-- tax amount
-- currency
-- status
+Teams dealing with invoices, resumes, or contracts require:
 
-Because extraction may not always be perfect, the reviewer checks the output, edits incorrect values, finalizes the document, and exports the approved result as JSON or CSV.
+* structured storage
+* background processing
+* status visibility
+* manual review
+* retry mechanisms
+* export capabilities
 
-This scenario fits the assignment especially well because it demonstrates:
+This system solves these challenges using a **modern async architecture**.
 
-- asynchronous job execution
-- progress tracking
-- structured extraction
-- manual correction
-- final approval
-- export workflow
+---
 
-## Key Requirements
+## 💼 Real-World Use Case
 
-- Frontend must use `React` or `Next.js` with `TypeScript`
-- Backend must use `Python` with `FastAPI`
-- Database must be `PostgreSQL`
-- Background processing must use `Celery`
-- Messaging and progress state must use `Redis`
-- `Redis Pub/Sub` is mandatory for progress events
-- processing must not run inside the request-response cycle
+### Invoice Processing System
 
-## Tech Stack
+1. User uploads invoice documents
+2. Backend creates processing jobs
+3. Celery workers process documents asynchronously
+4. Progress updates are streamed in real-time
+5. Extracted data is reviewed and corrected
+6. Approved documents are finalized
+7. Final output is exported (JSON / CSV)
+
+---
+
+## 🧰 Tech Stack
 
 ### Frontend
 
-- `Next.js` with `TypeScript`
-- `Tailwind CSS`
-- `TanStack Query`
-- `React Hook Form`
-- `WebSocket` or `Server-Sent Events` for live updates
+* Next.js (TypeScript)
+* Tailwind CSS
+* TanStack Query
+* React Hook Form
+* WebSockets / SSE
 
 ### Backend
 
-- `FastAPI`
-- `Pydantic`
-- `SQLAlchemy` or `SQLModel`
-- `Alembic`
+* FastAPI (Python)
+* SQLAlchemy / SQLModel
+* Pydantic
+* Alembic
 
-### Async + Realtime
+### Async & Messaging
 
-- `Celery`
-- `Redis` as broker
-- `Redis Pub/Sub` for progress events
+* Celery (task queue)
+* Redis (broker + Pub/Sub)
 
-### Data + Infra
+### Database & Infra
 
-- `PostgreSQL`
-- local file storage for demo
-- `Docker Compose` for local orchestration
+* PostgreSQL
+* Docker Compose
+* Local file storage
 
-## Core Features
+---
 
-- upload one or more documents
-- create async processing jobs
-- show job states: `Queued`, `Processing`, `Completed`, `Failed`
-- publish live or near-real-time progress
-- search, sort, and filter documents
-- review extracted output
-- edit and save reviewed output
-- finalize approved records
-- retry failed jobs
-- export finalized output as `JSON` and `CSV`
+## ⚙️ Core Features
 
-## System Architecture
+* 📤 Upload single or multiple documents
+* ⚡ Async background processing
+* 📊 Job states: `Queued`, `Processing`, `Completed`, `Failed`
+* 📡 Real-time progress tracking
+* 🔍 Search, filter, and sort documents
+* ✏️ Review and edit extracted data
+* ✅ Finalize approved results
+* 🔁 Retry failed jobs
+* 📁 Export to JSON / CSV
+
+---
+
+## 🏗️ System Architecture
 
 ```mermaid
 flowchart LR
-    U["User"] --> F["Frontend (Next.js)"]
-    F --> A["FastAPI Backend"]
-    A --> P["PostgreSQL"]
-    A --> R["Redis"]
-    A --> S["File Storage"]
-    A --> C["Celery Queue"]
-    C --> W["Celery Worker"]
-    W --> R
-    W --> P
-    R --> L["Realtime Stream (WebSocket / SSE)"]
-    L --> F
+    User --> Frontend
+    Frontend --> Backend
+    Backend --> PostgreSQL
+    Backend --> Redis
+    Backend --> Storage
+    Backend --> CeleryQueue
+    CeleryQueue --> Worker
+    Worker --> Redis
+    Worker --> Database
+    Redis --> RealtimeUpdates
+    RealtimeUpdates --> Frontend
 ```
 
-## Processing Flow
+---
+
+## 🔄 Processing Flow
 
 ```mermaid
 flowchart TD
-    A["Upload document"] --> B["Store file and metadata"]
-    B --> C["Create job record: queued"]
-    C --> D["Enqueue Celery task"]
-    D --> E["Worker starts processing"]
-    E --> F["Publish job_started"]
-    F --> G["Parse document"]
-    G --> H["Publish parsing completed"]
-    H --> I["Extract structured fields"]
-    I --> J["Publish extraction completed"]
-    J --> K["Store final JSON result"]
-    K --> L{"Success?"}
-    L -->|Yes| M["Mark completed"]
-    L -->|No| N["Mark failed"]
-    M --> O["Push progress update to frontend"]
-    N --> O
-    O --> P["User reviews output"]
-    P --> Q["User edits and finalizes"]
-    Q --> R["Export JSON / CSV"]
+    Upload --> SaveFile
+    SaveFile --> CreateJob
+    CreateJob --> QueueTask
+    QueueTask --> WorkerProcessing
+    WorkerProcessing --> Parsing
+    Parsing --> Extraction
+    Extraction --> StoreResult
+    StoreResult --> Decision
+    Decision -->|Success| Completed
+    Decision -->|Fail| Failed
+    Completed --> Review
+    Review --> Finalize
+    Finalize --> Export
 ```
 
-## Job Lifecycle
+---
+
+## 🔁 Job Lifecycle
 
 ```mermaid
 stateDiagram-v2
@@ -147,174 +146,160 @@ stateDiagram-v2
     Queued --> Processing
     Processing --> Completed
     Processing --> Failed
-    Failed --> Queued: Retry
+    Failed --> Queued : Retry
     Completed --> Finalized
 ```
 
-## Suggested Progress Events
+---
 
-- `job_queued`
-- `job_started`
-- `document_parsing_started`
-- `document_parsing_completed`
-- `field_extraction_started`
-- `field_extraction_completed`
-- `job_completed`
-- `job_failed`
+## 📡 Progress Events
 
-## Suggested API Surface
+* job_queued
+* job_started
+* parsing_started
+* parsing_completed
+* extraction_started
+* extraction_completed
+* job_completed
+* job_failed
+
+---
+
+## 🌐 API Endpoints
 
 ### Documents
 
-- `POST /api/documents/upload`
-- `GET /api/documents`
-- `GET /api/documents/{id}`
+* `POST /api/documents/upload`
+* `GET /api/documents`
+* `GET /api/documents/{id}`
 
 ### Jobs
 
-- `GET /api/jobs/{id}`
-- `POST /api/jobs/{id}/retry`
-- `GET /api/jobs/{id}/events`
-- `GET /api/jobs/{id}/stream`
+* `GET /api/jobs/{id}`
+* `POST /api/jobs/{id}/retry`
+* `GET /api/jobs/{id}/events`
+* `GET /api/jobs/{id}/stream`
 
-### Review + Finalization
+### Review
 
-- `PUT /api/documents/{id}/review`
-- `POST /api/documents/{id}/finalize`
+* `PUT /api/documents/{id}/review`
+* `POST /api/documents/{id}/finalize`
 
 ### Export
 
-- `GET /api/documents/{id}/export/json`
-- `GET /api/documents/{id}/export/csv`
+* `GET /api/documents/{id}/export/json`
+* `GET /api/documents/{id}/export/csv`
 
-## Suggested Database Design
+---
 
-### `documents`
+## 🗄️ Database Design
 
-- `id`
-- `original_filename`
-- `stored_file_path`
-- `mime_type`
-- `file_size`
-- `uploaded_at`
-- `current_status`
+### Documents
 
-### `processing_jobs`
+* id
+* original_filename
+* stored_file_path
+* mime_type
+* file_size
+* uploaded_at
+* status
 
-- `id`
-- `document_id`
-- `status`
-- `progress_percentage`
-- `current_stage`
-- `error_message`
-- `retry_count`
-- `created_at`
-- `started_at`
-- `completed_at`
+### Processing Jobs
 
-### `extracted_results`
+* id
+* document_id
+* status
+* progress
+* stage
+* error_message
+* retry_count
+* timestamps
 
-- `id`
-- `document_id`
-- `raw_text`
-- `structured_output_json`
-- `reviewed_output_json`
-- `is_finalized`
-- `finalized_at`
-- `updated_at`
+### Extracted Results
 
-## Frontend Screens
+* id
+* document_id
+* raw_text
+* structured_output
+* reviewed_output
+* is_finalized
+* finalized_at
 
-- Upload screen for single or multiple documents
-- Dashboard with search, filter, sort, and progress status
-- Detail page for extracted output review
-- Edit/finalize workflow page
-- Export action for finalized records
+---
 
-## Example User Flow
+## 🖥️ Frontend Pages
 
-1. A reviewer uploads 10 invoices.
-2. The backend stores metadata and creates 10 queued jobs.
-3. Celery workers process the files in the background.
-4. Redis Pub/Sub emits progress updates.
-5. The frontend dashboard shows live status changes.
-6. One job fails and becomes retryable.
-7. Completed jobs open in a review screen.
-8. The reviewer corrects extracted fields.
-9. The reviewer finalizes the approved result.
-10. The system exports the final record as JSON or CSV.
+* Upload page
+* Dashboard with job tracking
+* Document detail view
+* Review & edit page
+* Finalization & export page
 
-## Clean Architecture Expectation
+---
 
-- API routes for upload, list, detail, retry, finalize, and export
-- service layer for orchestration and business logic
-- worker layer for async processing
-- repository/data layer for persistence
-- typed schemas / DTOs
-- clear separation between sync API handling and async execution
+## 👤 User Flow
 
-## Error Handling and Retry
+1. Upload documents
+2. Jobs are created
+3. Workers process asynchronously
+4. Progress updates are streamed
+5. Failed jobs can be retried
+6. Completed jobs go to review
+7. User edits extracted data
+8. User finalizes document
+9. Export final result
 
-- invalid uploads should fail fast with clear validation errors
-- worker exceptions should move the job to `Failed`
-- failure details should be stored and visible
-- failed jobs should support retry
-- progress events should include failure states
-- finalization should prevent accidental duplicate exports or inconsistent state
+---
 
-## Bonus Improvements
+## ⚠️ Error Handling
 
-- Docker Compose setup
-- automated tests
-- authentication
-- idempotent retry handling
-- cancellation support
-- storage abstraction for cloud object storage
-- large-file edge-case handling
+* Invalid uploads are rejected early
+* Failed jobs store error details
+* Retry mechanism available
+* Progress includes failure states
+* Finalization ensures consistency
 
-## Assumptions
+---
 
-- local file storage is acceptable for demo purposes
-- parsing logic can be simple or mocked
-- progress visibility can be near-real-time
-- export is only required for finalized records
-- authentication is optional unless explicitly added
+## ⭐ Future Improvements
 
-## Evaluation Alignment
+* Authentication (JWT)
+* Cloud storage (S3)
+* Job cancellation
+* Bulk processing optimization
+* Advanced OCR / AI extraction
 
-This design directly supports the expected evaluation areas:
+---
 
-- correctness of async workflow
-- proper use of Celery
-- correct Redis Pub/Sub integration
-- backend API design
-- frontend-backend integration
-- database design
-- progress tracking
-- retry and error handling
-- maintainable code structure
-- engineering maturity
+## 🚀 Getting Started
 
-## Deliverables
+```bash
+# Clone repo
+git clone <your-repo-url>
 
-- GitHub repository
-- `README.md` with setup and architecture overview
-- sample files for testing
-- sample exported outputs
-- short demo video
-- note on AI tool usage if used during development
+# Run with Docker
+docker-compose up --build
+```
 
-## Submission Notes
+---
 
-For the strongest submission, prioritize:
+## 📦 Deliverables
 
-- a clean async pipeline
-- visible job progress
-- reliable retry behavior
-- a simple but polished UI
-- readable architecture and documentation
+* Source code (GitHub)
+* Sample documents
+* Exported outputs
+* Demo video
 
-## Reference
+---
 
-The detailed requirement breakdown is available in [PROJECT_REQUIREMENTS.md](C:/Users/abhis/Downloads/internship/PROJECT_REQUIREMENTS.md).
+## 📝 Notes
 
+* Focus is on system design, not AI accuracy
+* Local storage is used for demonstration
+* Real-time updates are near-live
+
+---
+
+## 📚 Reference
+
+Based on system requirements:
